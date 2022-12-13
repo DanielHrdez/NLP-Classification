@@ -18,7 +18,7 @@ import pkg_resources
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from stop_words import STOP_WORDS
 
-def parse_args(argv: list[str]) -> dict:
+def parse_arguments(argument_list: list[str]) -> dict:
     """
     Parse the arguments
         :param argv: list of arguments
@@ -26,15 +26,15 @@ def parse_args(argv: list[str]) -> dict:
     """
     input_filename = ''
     output_filename = ''
-    opts, args = getopt.getopt(argv, 'i:o:', ['ifile=', 'ofile='])
-    if len(args) != 0 or len(opts) != 2:
+    options, arguments = getopt.getopt(argument_list, 'i:o:', ['ifile=', 'ofile='])
+    if len(arguments) != 0 or len(options) != 2:
         print('vocabulary.py -i <inputfile> -o <outputfile>')
         sys.exit(2)
-    for opt, arg in opts:
-        if opt in ('-i'):
-            input_filename = arg
-        elif opt in ('-o'):
-            output_filename = arg
+    for option, argument in options:
+        if option in ('-i'):
+            input_filename = argument
+        elif option in ('-o'):
+            output_filename = argument
     return input_filename, output_filename
 
 def ask_parameters() -> dict:
@@ -54,6 +54,104 @@ def ask_parameters() -> dict:
         parameters['lemmatization'] = input('Lemmatization? (y/n): ').lower()
     return parameters
 
+def lowercase(text: str, option: str) -> str:
+    """
+    Lowercase the text
+        :param text: text to lowercase
+        :param lowercase: lowercase? (y/n)
+        :return: text lowercased
+    """
+    return text.lower() if option == 'y' else text
+
+def puntuation_marks(text: str, option: str) -> str:
+    """
+    Remove punctuation marks
+        :param text: text to remove punctuation marks
+        :param punctuation_marks: remove punctuation marks? (y/n)
+        :return: text without punctuation marks
+    """
+    return re.sub(r'[:.,;!?]', '', text) if option == 'y' else text
+
+def stopwords(tokens: list[str], option: str) -> list[str]:
+    """
+    Remove stopwords
+        :param tokens: list of tokens
+        :param stopwords: remove stopwords? (y/n)
+        :return: list of tokens without stopwords
+    """
+    if option == 'y':
+        return [token for token in tokens if token not in STOP_WORDS]
+    return tokens
+
+def emojis(text: str, option: str) -> str:
+    """
+    Remove emojis
+        :param text: text to remove emojis
+        :param emojis: remove emojis? (y/n/w)
+        :return: text without emojis
+    """
+    if option == 'y':
+        return emoji.replace_emoji(text, '')
+    if option == 'w':
+        return emoji.demojize(text)
+    return text
+
+def url_html_hashtags(text: str, option: str) -> str:
+    """
+    Remove URLs and HTML hashtags
+        :param text: text to remove URLs and HTML hashtags
+        :param url_html_hashtags: remove URLs and HTML hashtags? (y/n)
+        :return: text without URLs and HTML hashtags
+    """
+    if option == 'y':
+        return re.sub(r'http\S+|#\S+|<.*?>', '', text)
+    return text
+
+def spell_check(text: str, option: str) -> str:
+    """
+    Spell check the text
+        :param text: text to spell check
+        :param spell_check: spell check? (y/n)
+        :return: text without spelling errors
+    """
+    if option == 'y':
+        sym_spell = SymSpell(max_dictionary_edit_distance=1, prefix_length=7)
+        dictionary_path = pkg_resources.resource_filename("symspellpy",
+                                                          "frequency_dictionary_en_82_765.txt")
+        bigram_path = pkg_resources.resource_filename("symspellpy",
+                                                      "frequency_bigramdictionary_en_243_342.txt")
+        sym_spell.load_dictionary(dictionary_path, term_index=0, count_index=1)
+        sym_spell.load_bigram_dictionary(bigram_path, term_index=0, count_index=2)
+        return sym_spell.lookup_compound(text,
+                                         max_edit_distance=1,
+                                         ignore_non_words=True,
+                                         split_by_space=True)
+    return text
+
+def stemming(tokens: list[str], option: str) -> list[str]:
+    """
+    Stemming the text
+        :param tokens: list of tokens
+        :param stemming: stemming? (y/n)
+        :return: list of tokens with stemming
+    """
+    if option == 'y':
+        stemmer = PorterStemmer()
+        return [stemmer.stem(word) for word in tokens]
+    return tokens
+
+def lemmatization(tokens: list[str], option: str) -> list[str]:
+    """
+    Lemmatization the text
+        :param tokens: list of tokens
+        :param lemmatization: lemmatization? (y/n)
+        :return: list of tokens with lemmatization
+    """
+    if option == 'y':
+        lemmatizer = WordNetLemmatizer()
+        return [lemmatizer.lemmatize(word, pos='v') for word in tokens]
+    return tokens
+
 def tokenize(text: str, parameters: dict) -> list[str]:
     """
     Tokenize the text
@@ -62,43 +160,15 @@ def tokenize(text: str, parameters: dict) -> list[str]:
         :return: list of tokens
     """
     text = re.sub(r'\n', ' ', text)
-    if parameters['lowercase'] == 'y':
-        text = text.lower()
-    if parameters['punctuation_marks'] == 'y':
-        text = re.sub(r'[:.,;!?]', '', text)
-    if parameters['stopwords'] == 'y':
-        text = re.sub(rf'\b({"|".join(STOP_WORDS)})\b', '', text)
-        text = re.sub(r'\s+', ' ', text)
-    if parameters['emojis'] == 'y':
-        text = emoji.replace_emoji(text, '')
-    elif parameters['emojis'] == 'w':
-        text = emoji.demojize(text)
-    if parameters['url_html_hashtags'] == 'y':
-        text = re.sub(r'http\S+|#\S+|<.*?>', '', text)
-    if parameters['spell_check'] == 'y':
-        sym_spell = SymSpell(max_dictionary_edit_distance=1, prefix_length=7)
-        dictionary_path = pkg_resources.resource_filename(
-            "symspellpy", "frequency_dictionary_en_82_765.txt"
-        )
-        bigram_path = pkg_resources.resource_filename(
-            "symspellpy", "frequency_bigramdictionary_en_243_342.txt"
-        )
-        sym_spell.load_dictionary(dictionary_path, term_index=0, count_index=1)
-        sym_spell.load_bigram_dictionary(bigram_path, term_index=0, count_index=2)
-        text = sym_spell.lookup_compound(
-            text,
-            max_edit_distance=1,
-            ignore_non_words=True,
-            split_by_space=True,
-        )
+    text = lowercase(text, parameters['lowercase'])
+    text = puntuation_marks(text, parameters['punctuation_marks'])
+    text = emojis(text, parameters['emojis'])
+    text = url_html_hashtags(text, parameters['url_html_hashtags'])
+    text = spell_check(text, parameters['spell_check'])
     tokens = text.split()
-    if parameters['stemming'] == 'y':
-        porter = PorterStemmer()
-        tokens = [porter.stem(word) for word in tokens]
-    elif parameters['lemmatization'] == 'y':
-        lemmatizer = WordNetLemmatizer()
-        tokens = [lemmatizer.lemmatize(word, pos="v") for word in tokens]
-    return tokens
+    tokens = stopwords(tokens, parameters['stopwords'])
+    tokens = stemming(tokens, parameters['stemming'])
+    return lemmatization(tokens, parameters['lemmatization'])
 
 def write_file(filename: str, tokens: list[str]) -> None:
     """
@@ -111,9 +181,16 @@ def write_file(filename: str, tokens: list[str]) -> None:
         for token in tokens:
             file.write(f'{token}\n')
 
-def main():
-    """Main function"""
-    input_filename, output_filename = parse_args(sys.argv[1:])
+def main() -> None:
+    """
+    Main function
+    - Parse the arguments
+    - Ask the user for the parameters
+    - Read the input file
+    - Tokenize the text
+    - Write the tokens in a output file
+    """
+    input_filename, output_filename = parse_arguments(sys.argv[1:])
     parameters = ask_parameters()
     data_frame = pandas.read_excel(input_filename)
     list_all_text = data_frame.iloc[:, 0].str.cat(sep=' ')
