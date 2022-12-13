@@ -123,6 +123,7 @@ def export_files(results: list, output_folder: str) -> None:
         :param results: list with the results
         :param output_folder: folder to export the files
     """
+    os.makedirs(output_folder, exist_ok=True)
     with open(output_folder + '/clasification_alu0101331720.txt', 'w', encoding='utf-8') as file:
         for result in results:
             file.write(

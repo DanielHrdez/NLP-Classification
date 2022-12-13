@@ -257,3 +257,63 @@ ACIERTO = 61.36%
 }
 ACIERTO = 64.82%
 ```
+
+## NOW TEST WITH UNK IN UNDER 3
+
+```js
+ACIERTO = 63.85%
+```
+
+## ...AND 4
+
+```js
+ACIERTO = 63.35%
+```
+
+## BEST, UNK -> 2
+
+```js
+{
+    "numbers": "y",
+    "long_words": "y",
+    "lowercase": "y",
+    "punctuation_marks": "y",
+    "stopwords": "n",
+    "emojis": "y",
+    "url_html_hashtags": "y",
+    "spell_check": "y",
+    "stemming": "y",
+    "lemmatization": "n"
+}
+ACIERTO = 64.82%
+```
+
+## WITH 2 OF LAPLACE
+
+```js
+ACIERTO = 64.77%
+```
+
+## WITH 3 OF LAPLACE
+
+```js
+ACIERTO = 64.79%
+```
+
+## BEST, UNK -> 2, LAPLACE -> 1
+
+```js
+{
+    "numbers": "y",
+    "long_words": "y",
+    "lowercase": "y",
+    "punctuation_marks": "y",
+    "stopwords": "n",
+    "emojis": "y",
+    "url_html_hashtags": "y",
+    "spell_check": "y",
+    "stemming": "y",
+    "lemmatization": "n"
+}
+ACIERTO = 64.82%
+```
