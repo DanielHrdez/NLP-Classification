@@ -16,11 +16,11 @@ for i in range(n_tweets):
 pc_acierto = acierto / n_tweets * 100
 
 color = ''
-if pc_acierto <= 60:
+if pc_acierto <= 50:
     color = '\033[1;31m'
-elif pc_acierto <= 75:
+elif pc_acierto <= 70:
     color = '\033[1;33m'
-elif pc_acierto <= 90:
+elif pc_acierto <= 100:
     color = '\033[1;32m'
 else:
     color = '\033[1;34m'
