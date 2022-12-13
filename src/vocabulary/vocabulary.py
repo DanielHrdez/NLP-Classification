@@ -9,6 +9,7 @@ Vocabulary
 """
 
 import sys
+import os
 import getopt
 import re
 import pandas
@@ -17,6 +18,7 @@ from symspellpy import SymSpell
 import pkg_resources
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from constants import PUNTUATION_MARKS, STOP_WORDS
+import json
 
 def parse_arguments(argument_list: list[str]) -> dict:
     """
@@ -163,14 +165,31 @@ def lemmatization(tokens: set[str], option: str) -> list[str]:
         return sorted({lemmatizer.lemmatize(word, pos='v') for word in tokens if word})
     return sorted(tokens)
 
-def tokenize(text: list[str], parameters: dict) -> list[str]:
+def filter_numbers(tokens: set()) -> set():
+    """
+    Filter the numbers
+        :param tokens: set of tokens
+        :return: set without numbers
+    """
+    return {token for token in tokens if re.match(r'.*\d.*', token) is None}
+
+def filter_long_words(tokens: set()) -> set():
+    """
+    Filter the long words
+        :param tokens: set of tokens
+        :return: set without long words
+    """
+    return {token for token in tokens if len(token) < 20}
+
+def tokenize(tokens: list[str], parameters: dict) -> list[str]:
     """
     Tokenize the text
-        :param text: text to tokenize
+        :param tokens: text to tokenize
         :param parameters: dictionary with the parameters
         :return: list of tokens in alphabetic order
     """
-    tokens = set(text.split())
+    tokens = filter_numbers(tokens)
+    tokens = filter_long_words(tokens)
     tokens = lowercase(tokens, parameters['lowercase'])
     tokens = puntuation_marks(tokens, parameters['punctuation_marks'])
     tokens = stopwords(tokens, parameters['stopwords'])
@@ -191,6 +210,14 @@ def write_file(filename: str, tokens: list[str]) -> None:
         for token in tokens:
             file.write(f'{token}\n')
 
+def write_json_parameters(filename: str, parameters: dict) -> None:
+    """
+    Write the parameters in a json file
+        :param parameters: dictionary with the parameters
+    """
+    with open(filename, 'w', encoding='utf-8') as file:
+        json.dump(parameters, file, indent=4)
+
 def main() -> None:
     """
     Main function
@@ -204,8 +231,10 @@ def main() -> None:
     parameters = ask_parameters()
     data_frame = pandas.read_excel(input_filename)
     all_text = data_frame.iloc[:, 0].str.cat(sep=' ')
-    tokens = tokenize(all_text, parameters)
+    tokens = tokenize(set(all_text.split()), parameters)
     write_file(output_filename, tokens)
+    path = os.path.dirname(output_filename)
+    write_json_parameters(path + '/parameters.json', parameters)
 
 if __name__ == '__main__':
     main()
