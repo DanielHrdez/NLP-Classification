@@ -125,10 +125,10 @@ def main() -> None:
     negative_tweets = train_file[train_file.Negative == 'Negative'].iloc[:, 0]
     positive = positive_tweets.str.cat(sep=' ').split()
     negative = negative_tweets.str.cat(sep=' ').split()
-    for message in vocabulary.tokenize(positive, return_set=False):
+    for message in vocabulary.tokenize(positive, use_set=False):
         yield message
     positive_tokens = vocabulary.tokens
-    for message in vocabulary.tokenize(negative, return_set=False):
+    for message in vocabulary.tokenize(negative, use_set=False):
         yield message
     negative_tokens = vocabulary.tokens
     count = 0
@@ -171,7 +171,8 @@ if __name__ == '__main__':
     with alive_bar(MAX) as bar:
         count = 1
         for message in main():
-            if (count < MAX): print(RESET + message + YELLOW)
+            if message == 'NO PRINT': pass
+            elif (count < MAX): print(RESET + message + YELLOW)
             else: print(RESET + message + GREEN)
             bar()
             count += 1

@@ -6,7 +6,7 @@ Daniel Hernández de León - alu0101331720
 Stop Words
 """
 
-PUNTUATION_MARKS = ['.', ',', ';', ':', '!', '?']
+PUNCTUATION_MARKS = ['.', ',', ';', ':', '!', '?']
 
 SYMBOLS = [
     '(',

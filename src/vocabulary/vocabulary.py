@@ -18,8 +18,11 @@ import emoji
 from symspellpy import SymSpell
 import pkg_resources
 from nltk.stem import PorterStemmer, WordNetLemmatizer
-from .constants import PUNTUATION_MARKS, STOP_WORDS
 from alive_progress import alive_bar
+if __name__ == '__main__':
+    from constants import PUNCTUATION_MARKS, STOP_WORDS
+else:
+    from .constants import PUNCTUATION_MARKS, STOP_WORDS
 
 class Vocabulary:
     """
@@ -28,6 +31,9 @@ class Vocabulary:
     parameters = {}
     output_filename = ''
     tokens = []
+    spell_checker = SymSpell(max_dictionary_edit_distance=1, prefix_length=7)
+    spell_check_loaded = False
+    use_set = False
 
     def __init__(self, output_filename: str, ask_for_parameters: bool = False):
         """
@@ -36,126 +42,126 @@ class Vocabulary:
         """
         self.output_filename = output_filename
         if ask_for_parameters:
-            self.parameters = self.ask_parameters()
+            self.ask_parameters()
 
-    @staticmethod
-    def ask_parameters() -> dict:
+    def ask_parameters(self) -> dict:
         """
         Ask the user for the parameters
             :return: dictionary with the parameters
         """
-        parameters = {}
-        parameters['lowercase'] = input('Lowercase? (y/n): ').lower()
-        parameters['punctuation_marks'] = input('No punctuation marks? (y/n): ').lower()
-        parameters['stopwords'] = input('No stopwords? (y/n): ').lower()
-        parameters['emojis'] = input('No emojis? (y/n/w): ').lower()
-        parameters['url_html_hashtags'] = input('No URLs and HTML hashtags? (y/n): ').lower()
-        parameters['spell_check'] = input('Spell check? (y/n): ').lower()
-        parameters['stemming'] = input('Stemming? (y/n): ').lower()
-        if parameters['stemming'] != 'y':
-            parameters['lemmatization'] = input('Lemmatization? (y/n): ').lower()
+        self.parameters = {}
+        self.parameters['numbers'] = input('No numbers? (y/n): ').lower()
+        self.parameters['long_words'] = input('No long words? (y/n): ').lower()
+        self.parameters['lowercase'] = input('Lowercase? (y/n): ').lower()
+        self.parameters['punctuation_marks'] = input('No punctuation marks? (y/n): ').lower()
+        self.parameters['stopwords'] = input('No stopwords? (y/n): ').lower()
+        self.parameters['emojis'] = input('No emojis? (y/n/w): ').lower()
+        self.parameters['url_html_hashtags'] = input('No URLs and HTML hashtags? (y/n): ').lower()
+        self.parameters['spell_check'] = input('Spell check? (y/n): ').lower()
+        self.parameters['stemming'] = input('Stemming? (y/n): ').lower()
+        if self.parameters['stemming'] != 'y':
+            self.parameters['lemmatization'] = input('Lemmatization? (y/n): ').lower()
         else:
-            parameters['lemmatization'] = 'n'
-        return parameters
+            self.parameters['lemmatization'] = 'n'
 
-    @staticmethod
-    def lowercase(tokens: set[str], option: str, return_set: bool = True) -> set[str]:
+    def lowercase(self) -> set[str]:
         """
         Lowercase the tokens
             :param tokens: set to lowercase
             :param lowercase: lowercase? (y/n)
             :return: set lowercased
         """
-        if return_set:
-            return {token.lower() for token in tokens if token} if option == 'y' else tokens
-        return [token.lower() for token in tokens if token] if option == 'y' else tokens
+        option = self.parameters['lowercase']
+        if self.use_set:
+            self.tokens = {token.lower() for token in self.tokens if token} if option == 'y' else self.tokens
+        self.tokens = [token.lower() for token in self.tokens if token] if option == 'y' else self.tokens
 
-    @staticmethod
-    def puntuation_marks(tokens: set[str], option: str, return_set: bool = True) -> set[str]:
+    def punctuation_marks(self) -> set[str]:
         """
         Remove punctuation marks
             :param tokens: set to remove punctuation marks
             :param punctuation_marks: remove punctuation marks? (y/n)
             :return: set without punctuation marks
         """
+        option = self.parameters['punctuation_marks']
         if option == 'y':
-            if return_set:
-                return {re.sub(rf"[{'|'.join(PUNTUATION_MARKS)}]", '', token) for token in tokens if token}
-            return [re.sub(rf"[{'|'.join(PUNTUATION_MARKS)}]", '', token) for token in tokens if token]
-        return tokens
+            if self.use_set:
+                self.tokens = {re.sub(rf"[{'|'.join(PUNCTUATION_MARKS)}]", '', token) for token in self.tokens if token}
+            self.tokens = [re.sub(rf"[{'|'.join(PUNCTUATION_MARKS)}]", '', token) for token in self.tokens if token]
 
-    @staticmethod
-    def stopwords(tokens: set[str], option: str, return_set: bool = True) -> set[str]:
+    def stopwords(self) -> set[str]:
         """
         Remove stopwords
             :param tokens: set of tokens
             :param stopwords: remove stopwords? (y/n)
             :return: set of tokens without stopwords
         """
-        if return_set:
-            return {token for token in tokens if token not in STOP_WORDS} if option == 'y' else tokens
-        return [token for token in tokens if token not in STOP_WORDS] if option == 'y' else tokens
+        option = self.parameters['stopwords']
+        if self.use_set:
+            self.tokens = {token for token in self.tokens if token not in STOP_WORDS} if option == 'y' else self.tokens
+        self.tokens = [token for token in self.tokens if token not in STOP_WORDS] if option == 'y' else self.tokens
 
-    @staticmethod
-    def emojis(tokens: set[str], option: str, return_set: bool = True) -> set[str]:
+    def emojis(self) -> set[str]:
         """
         Remove emojis
             :param tokens: set to remove emojis
             :param emojis: remove emojis? (y/n/w)
             :return: set without emojis
         """
+        option = self.parameters['emojis']
         if option == 'y':
-            if return_set:
-                return {emoji.replace_emoji(token, '') for token in tokens if token}
-            return [emoji.replace_emoji(token, '') for token in tokens if token]
+            if self.use_set:
+                self.tokens = {emoji.replace_emoji(token, '') for token in self.tokens if token}
+            self.tokens = [emoji.replace_emoji(token, '') for token in self.tokens if token]
         if option == 'w':
-            if return_set:
-                return {emoji.demojize(token) for token in tokens if token}
-            return [emoji.demojize(token) for token in tokens if token]
-        return tokens
+            if self.use_set:
+                self.tokens = {emoji.demojize(token) for token in self.tokens if token}
+            self.tokens = [emoji.demojize(token) for token in self.tokens if token]
 
-    @staticmethod
-    def url_html_hashtags(tokens: set[str], option: str, return_set: bool = True) -> set[str]:
+    def url_html_hashtags(self) -> set[str]:
         """
         Remove URLs and HTML hashtags
             :param tokens: set to remove URLs and HTML hashtags
             :param url_html_hashtags: remove URLs and HTML hashtags? (y/n)
             :return: set without URLs and HTML hashtags
         """
+        option = self.parameters['url_html_hashtags']
         if option == 'y':
-            if return_set:
-                return {re.sub(r'http.*|#.*|<.*>|@.*', '', token) for token in tokens if token}
-            return [re.sub(r'http.*|#.*|<.*>|@.*', '', token) for token in tokens if token]
-        return tokens
+            if self.use_set:
+                self.tokens = {re.sub(r'http.*|#.*|<.*>|@.*', '', token) for token in self.tokens if token}
+            self.tokens = [re.sub(r'http.*|#.*|<.*>|@.*', '', token) for token in self.tokens if token]
 
-    @staticmethod
-    def spell_check(tokens: set[str], option: str, return_set: bool = True) -> set[str]:
+    def load_spell_check(self):
+        """
+        Load the spell checker
+        """
+        self.spell_checker = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
+        self.spell_checker.load_dictionary(pkg_resources.resource_filename('symspellpy', 'frequency_dictionary_en_82_765.txt'), term_index=0, count_index=1)
+        self.spell_checker.load_bigram_dictionary(pkg_resources.resource_filename('symspellpy', 'frequency_bigramdictionary_en_243_342.txt'), term_index=0, count_index=1)
+
+
+    def spell_check(self) -> set[str]:
         """
         Spell check the tokens
             :param tokens: set to spell check
             :param spell_check: spell check? (y/n)
             :return: set without spelling errors
         """
+        option = self.parameters['spell_check']
         if option == 'y':
-            sym_spell = SymSpell(max_dictionary_edit_distance=1, prefix_length=7)
-            dictionary_path = pkg_resources.resource_filename(
-                "symspellpy",
-                "frequency_dictionary_en_82_765.txt")
-            bigram_path = pkg_resources.resource_filename(
-                "symspellpy",
-                "frequency_bigramdictionary_en_243_342.txt")
-            sym_spell.load_dictionary(dictionary_path, term_index=0, count_index=1)
-            sym_spell.load_bigram_dictionary(bigram_path, term_index=0, count_index=2)
+            if not self.spell_check_loaded:
+                self.load_spell_check()
+                self.spell_check_loaded = True
             result = set()
-            if not return_set:
+            if not self.use_set:
                 result = []
-            for token in tokens:
+            for token in self.tokens:
                 if token:
-                    suggestions = sym_spell.lookup_compound(token, max_edit_distance=1)
+                    suggestions = self.spell_checker.lookup_compound(token, max_edit_distance=1)
                     if suggestions:
                         term = suggestions[0].term
                         splitted = term.split(' ')
-                        if return_set:
+                        if self.use_set:
                             if len(splitted) > 1:
                                 result.add(splitted[0])
                                 result.add(splitted[1])
@@ -167,97 +173,97 @@ class Vocabulary:
                                 result.append(splitted[1])
                             else:
                                 result.append(term)
-            return result
-        return tokens
+            self.tokens = result
 
-    @staticmethod
-    def stemming(tokens: set[str], option: str, return_set: bool = True) -> set[str]:
+    def stemming(self) -> set[str]:
         """
         Stemming the tokens
             :param tokens: set of tokens
             :param stemming: stemming? (y/n)
             :return: set of tokens with stemming
         """
+        option = self.parameters['stemming']
         if option == 'y':
             stemmer = PorterStemmer()
-            if return_set:
-                return {stemmer.stem(word) for word in tokens if word}
-            return [stemmer.stem(word) for word in tokens if word]
-        return tokens
+            if self.use_set:
+                self.tokens = {stemmer.stem(word) for word in self.tokens if word}
+            self.tokens = [stemmer.stem(word) for word in self.tokens if word]
 
-    @staticmethod
-    def lemmatization(tokens: set[str], option: str, return_set: bool = True) -> list[str]:
+    def lemmatization(self) -> list[str]:
         """
         Lemmatization the tokens
             :param tokens: set of tokens
             :param lemmatization: lemmatization? (y/n)
             :return: list of tokens with lemmatization in alphabetic order
         """
+        option = self.parameters['lemmatization']
         if option == 'y':
             lemmatizer = WordNetLemmatizer()
-            if return_set:
-                return sorted({lemmatizer.lemmatize(word, pos='v') for word in tokens if word})
-            return sorted([lemmatizer.lemmatize(word, pos='v') for word in tokens if word])
-        return sorted(tokens)
+            if self.use_set:
+                self.tokens = sorted({lemmatizer.lemmatize(word, pos='v') for word in self.tokens if word})
+            self.tokens = sorted([lemmatizer.lemmatize(word, pos='v') for word in self.tokens if word])
+        self.tokens = sorted(self.tokens)
 
-    @staticmethod
-    def filter_numbers(tokens: set(), return_set: bool = True) -> set():
+    def numbers(self):
         """
         Filter the numbers
             :param tokens: set of tokens
             :return: set without numbers
         """
-        if return_set:
-            return {token for token in tokens if re.match(r'.*\d.*', token) is None}
-        return [token for token in tokens if re.match(r'.*\d.*', token) is None]
+        if self.parameters['numbers'] == 'y':
+            if self.use_set:
+                self.tokens = {token for token in self.tokens if re.match(r'.*\d.*', token) is None}
+            self.tokens = [token for token in self.tokens if re.match(r'.*\d.*', token) is None]
 
-    @staticmethod
-    def filter_long_words(tokens: set[str], return_set: bool = True) -> set[str]:
+    def long_words(self) -> set[str]:
         """
         Filter the long words
             :param tokens: set of tokens
             :return: set without long words
         """
-        if return_set:
-            return {token for token in tokens if len(token) < 20}
-        return [token for token in tokens if len(token) < 20]
+        if self.parameters['long_words'] == 'y':
+            if self.use_set:
+                self.tokens = {token for token in self.tokens if len(token) < 20}
+            self.tokens = [token for token in self.tokens if len(token) < 20]
 
-    def tokenize(self, tokens: list[str], return_set: bool = True) -> list[str]:
+    def tokenize(self, tokens: list[str], use_set: bool = True) -> list[str]:
         """
         Tokenize the text
             :param tokens: text to tokenize
             :return: list of tokens in alphabetic order
         """
-        tokens = self.filter_numbers(tokens, return_set)
+        self.tokens = tokens
+        self.use_set = use_set
+        self.numbers()
         yield 'Numbers filtered.'
-        tokens = self.filter_long_words(tokens, return_set)
+        self.long_words()
         yield 'Long words filtered.'
-        tokens = self.lowercase(tokens, self.parameters['lowercase'], return_set)
+        self.lowercase()
         yield 'Lowercase done.'
-        tokens = self.puntuation_marks(tokens, self.parameters['punctuation_marks'], return_set)
-        yield 'Puntuation marks done.'
-        tokens = self.stopwords(tokens, self.parameters['stopwords'], return_set)
+        self.punctuation_marks()
+        yield 'Punctuation marks done.'
+        self.stopwords()
         yield 'Stopwords done.'
-        tokens = self.emojis(tokens, self.parameters['emojis'], return_set)
+        self.emojis()
         yield 'Emojis done.'
-        tokens = self.url_html_hashtags(tokens, self.parameters['url_html_hashtags'], return_set)
+        self.url_html_hashtags()
         yield 'URL-HTML-# done.'
-        tokens = self.spell_check(tokens, self.parameters['spell_check'], return_set)
+        self.spell_check()
         yield 'Spell check done.'
-        tokens = self.stemming(tokens, self.parameters['stemming'], return_set)
+        self.stemming()
         yield 'Stemming done.'
-        self.tokens = self.lemmatization(tokens, self.parameters['lemmatization'], return_set)
+        self.lemmatization()
         yield 'Lemmatization done.'
 
-    def write_file(self, filename: str, tokens: list[str]) -> None:
+    def write_file(self, filename: str) -> None:
         """
         Write the tokens in a file
             :param filename: name of the file
             :param tokens: list of tokens
         """
         with open(filename, 'w', encoding='utf-8') as file:
-            file.write(f'Number_of_words: {len(tokens)}\n')
-            for token in tokens:
+            file.write(f'Number_of_words: {len(self.tokens)}\n')
+            for token in self.tokens:
                 file.write(f'{token}\n')
 
     
@@ -273,7 +279,7 @@ class Vocabulary:
         """
         Write the tokens in a file
         """
-        self.write_file(self.output_filename, self.tokens)
+        self.write_file(self.output_filename)
         path = os.path.dirname(self.output_filename)
         self.write_json_parameters(path + '/parameters.json')
 
@@ -305,11 +311,24 @@ def main() -> None:
     - Tokenize the text
     - Write the tokens in a output file
     """
+    YELLOW = '\033[33m'
+    GREEN = '\033[32m'
+    RESET = '\033[0m'
+    MAX = 10
     input_filename, output_filename = parse_arguments(sys.argv[1:])
     vocabulary = Vocabulary(output_filename, True)
     data_frame = pandas.read_excel(input_filename)
     all_text = data_frame.iloc[:, 0].str.cat(sep=' ')
-    vocabulary.tokenize(set(all_text.split()))
+    print(YELLOW, end='')
+    with alive_bar(MAX) as bar:
+        count = 1
+        for message in vocabulary.tokenize(set(all_text.split())):
+            if message == 'NO PRINT': pass
+            elif (count < MAX): print(RESET + message + YELLOW)
+            else: print(RESET + message + GREEN)
+            bar()
+            count += 1
+    print(RESET)
     vocabulary.write()
 
 if __name__ == '__main__':

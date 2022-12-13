@@ -13,6 +13,7 @@ import sys
 import json
 import pandas
 import math
+import os
 from alive_progress import alive_bar
 
 from vocabulary.vocabulary import Vocabulary
@@ -54,9 +55,9 @@ def search_language_model() -> list:
     """
     files = []
     with open('./out/language_model_positive.txt', 'r', encoding='utf-8') as file:
-        files.append(file)
+        files.append(file.readlines())
     with open('./out/language_model_negative.txt', 'r', encoding='utf-8') as file:
-        files.append(file)
+        files.append(file.readlines())
     if len(files) != 2:
         raise Exception('No language model files found')
     return files
@@ -69,22 +70,21 @@ def process_language_models(files: list) -> list:
     """
     positive_model = {}
     negative_model = {}
-    positive_documents = int(files[0].readline().split(' ')[1])
-    negative_documents = int(files[1].readline().split(' ')[1])
+    positive_documents = int(files[0][0].split(' ')[1])
+    negative_documents = int(files[1][0].split(' ')[1])
     total_documents = positive_documents + negative_documents
     positive_model['probability'] = math.log(positive_documents / total_documents)
     negative_model['probability'] = math.log(negative_documents / total_documents)
-
-    files[0].readline()
-    files[1].readline()
-    positive_lines = files[0].readlines()
-    negative_lines = files[1].readlines()
+    positive_model['words'] = {}
+    negative_model['words'] = {}
+    positive_lines = files[0][2:]
+    negative_lines = files[1][2:]
     for line in positive_lines:
-        [[_, word], _, [_, prob]] = list(map(lambda x : x.split(':'), line.split(' ')))
-        positive_model[word] = float(prob)
+        [[_, word], _, [_, prob]] = list(map(lambda x : x.split(':', 1), line.split(' ')))
+        positive_model['words'][word] = float(prob)
     for line in negative_lines:
-        [[_, word], _, [_, prob]] = list(map(lambda x : x.split(':'), line.split(' ')))
-        negative_model[word] = float(prob)
+        [[_, word], _, [_, prob]] = list(map(lambda x : x.split(':', 1), line.split(' ')))
+        negative_model['words'][word] = float(prob)
     return [positive_model, negative_model]
 
 def process_documents(dataframe: pandas.DataFrame, language_models: list, output_folder: str) -> None:
@@ -93,23 +93,26 @@ def process_documents(dataframe: pandas.DataFrame, language_models: list, output
     yield 'Parameters found.'
     vocabulary = Vocabulary('')
     vocabulary.parameters = parameters
-    dataframe = dataframe.reset_index()
-    for _, document in dataframe.iterrows():
-        text = document[0]
-        current_result = {'text': text[:10]}
-        vocabulary.tokenize(text.split(' '))
+    size = len(dataframe)
+    for i in range(size):
+        text = dataframe.iloc[i].values[0]
+        try: current_result = {'text': text[:10]}
+        except: continue
+        for _ in vocabulary.tokenize(text.split(), use_set=False):
+            pass
         count = 0
         for model in language_models:
             probability = model['probability']
             for word in vocabulary.tokens:
-                if word in model:
-                    probability += model[word]
+                if word in model['words']:
+                    probability += model['words'][word]
                 else:
-                    probability += model['<UNK>']
-            current_result['prob_model_' + count] = probability
+                    probability += model['words']['<UNK>']
+            current_result[f'prob_model_{count}'] = probability
             count += 1
         current_result['class'] = 'positive' if current_result['prob_model_0'] > current_result['prob_model_1'] else 'negative'
         results.append(current_result)
+        yield 'NO PRINT'
     yield 'Documents processed.'
     export_files(results, output_folder)
     yield 'Files exported.'
@@ -120,12 +123,15 @@ def export_files(results: list, output_folder: str) -> None:
         :param results: list with the results
         :param output_folder: folder to export the files
     """
-    with open(output_folder + '/clasification_alu0101331720', 'w', encoding='utf-8') as file:
+    with open(output_folder + '/clasification_alu0101331720.txt', 'w', encoding='utf-8') as file:
         for result in results:
-            file.write(result['text'], result['prob_model_0'], result['prob_model_1'], result['class'])
-    with open(output_folder + '/resumen_alu0101331720', 'w', encoding='utf-8') as file:
+            file.write(
+                f"{result['text']}, {round(result['prob_model_0'], 2)}, " +
+                f"{round(result['prob_model_1'], 2)}, {result['class']}\n"
+            )
+    with open(output_folder + '/resumen_alu0101331720.txt', 'w', encoding='utf-8') as file:
         for result in results:
-            file.write(result['text'], result['prob_model_0'], result['prob_model_1'], result['class'])
+            file.write(result['class'] + '\n')
     
 def main():
     """
@@ -137,7 +143,7 @@ def main():
     yield 'Language models found.'
     models = process_language_models(language_models)
     yield 'Language models processed.'
-    test_data = pandas.read_excel(test_filename, sep='\t', header=None)
+    test_data = pandas.read_excel(test_filename)
     yield 'Test data loaded.'
     for message in process_documents(test_data, models, output_folder):
         yield message
@@ -146,12 +152,13 @@ if __name__ == '__main__':
     YELLOW = '\033[33m'
     GREEN = '\033[32m'
     RESET = '\033[0m'
-    MAX = 7
+    MAX = 6 + 33443
     print(YELLOW, end='')
     with alive_bar(MAX) as bar:
         count = 1
         for message in main():
-            if (count < MAX): print(RESET + message + YELLOW)
+            if message == 'NO PRINT': pass
+            elif (count < MAX): print(RESET + message + YELLOW)
             else: print(RESET + message + GREEN)
             bar()
             count += 1
