@@ -96,8 +96,8 @@ def write_model(filename: str, number_documents: int, number_words: int, tokens:
         :param data: data to write
     """
     with open(filename, 'w', encoding='utf-8') as file:
-        file.write(f'Number of documents of the corpus: {number_documents}\n')
-        file.write(f'Number of words of the corpus: {number_words}\n')
+        file.write(f'Number_of_documents: {number_documents}\n')
+        file.write(f'Number_of_words: {number_words}\n')
         for token in tokens:
             prob = tokens[token]
             file.write(f'Word:{token} Frec:{prob["frec"]} LogProb:{prob["log_prob"]}\n')

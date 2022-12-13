@@ -1,5 +1,5 @@
-Number of documents of the corpus: 18046
-Number of words of the corpus: 7224
+Number_of_documents: 18046
+Number_of_words: 7224
 Word:a Frec:3500 LogProb:-4.5575622704165175
 Word:aah Frec:2 LogProb:-11.619753902703074
 Word:aalto Frec:2 LogProb:-11.619753902703074

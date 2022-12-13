@@ -1,5 +1,5 @@
-Number of documents of the corpus: 15397
-Number of words of the corpus: 6957
+Number_of_documents: 15397
+Number_of_words: 6957
 Word:a Frec:3088 LogProb:-4.533636281845629
 Word:aba Frec:3 LogProb:-11.18294461364432
 Word:abandon Frec:14 LogProb:-9.861188773662
