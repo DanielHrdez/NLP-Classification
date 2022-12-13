@@ -1,3 +1,3 @@
-# NLP Clasificator
+# NLP Classification
 
-Natural Language Processing Classificator
+Natural Language Processing Classification
