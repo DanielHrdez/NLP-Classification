@@ -95,7 +95,7 @@ def process_documents(dataframe: pandas.DataFrame, language_models: list, output
     vocabulary.parameters = parameters
     size = len(dataframe)
     for i in range(size):
-        text = dataframe.iloc[i].values[0]
+        text = dataframe.values[i, 0]
         try: current_result = {'text': text[:10]}
         except: continue
         for _ in vocabulary.tokenize(text.split(), use_set=False):
@@ -143,7 +143,7 @@ def main():
     yield 'Language models found.'
     models = process_language_models(language_models)
     yield 'Language models processed.'
-    test_data = pandas.read_excel(test_filename)
+    test_data = pandas.read_excel(test_filename, header=None)
     yield 'Test data loaded.'
     for message in process_documents(test_data, models, output_folder):
         yield message
@@ -152,7 +152,7 @@ if __name__ == '__main__':
     YELLOW = '\033[33m'
     GREEN = '\033[32m'
     RESET = '\033[0m'
-    MAX = 6 + 33443
+    MAX = 6 + 33444
     print(YELLOW, end='')
     with alive_bar(MAX) as bar:
         count = 1

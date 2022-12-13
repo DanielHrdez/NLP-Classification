@@ -255,5 +255,5 @@ ACIERTO = 61.36%
     "stemming": "y",
     "lemmatization": "n"
 }
-ACIERTO = 64.83%
+ACIERTO = 64.82%
 ```

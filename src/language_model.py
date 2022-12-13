@@ -112,17 +112,17 @@ def main() -> None:
         - Create the language model
         - Save the language model
     """
-    # input_filename, output_filename = parse_arguments(sys.argv[1:])
-    input_filename, output_filename = './data/COV_train.xlsx', './out/language_model'
+    input_filename, output_filename = parse_arguments(sys.argv[1:])
     parameters = search_parameters_json()
     yield 'Parameters file found'
     vocabulary_file = search_vocabulary()[2:]
     yield 'Vocabulary file found'
     vocabulary = Vocabulary('')
     vocabulary.parameters = parameters
-    train_file = pandas.read_excel(input_filename)
-    positive_tweets = train_file[train_file.Negative == 'Positive'].iloc[:, 0]
-    negative_tweets = train_file[train_file.Negative == 'Negative'].iloc[:, 0]
+    column_names = ['text', 'class_doc']
+    train_file = pandas.read_excel(input_filename, header=None, names=column_names)
+    positive_tweets = train_file[train_file.class_doc == 'Positive'].iloc[:, 0]
+    negative_tweets = train_file[train_file.class_doc == 'Negative'].iloc[:, 0]
     positive = positive_tweets.str.cat(sep=' ').split()
     negative = negative_tweets.str.cat(sep=' ').split()
     for message in vocabulary.tokenize(positive, use_set=False):

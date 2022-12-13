@@ -317,7 +317,7 @@ def main() -> None:
     MAX = 10
     input_filename, output_filename = parse_arguments(sys.argv[1:])
     vocabulary = Vocabulary(output_filename, True)
-    data_frame = pandas.read_excel(input_filename)
+    data_frame = pandas.read_excel(input_filename, header=None)
     all_text = data_frame.iloc[:, 0].str.cat(sep=' ')
     print(YELLOW, end='')
     with alive_bar(MAX) as bar:

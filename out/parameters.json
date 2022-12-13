@@ -7,6 +7,6 @@
     "emojis": "y",
     "url_html_hashtags": "y",
     "spell_check": "y",
-    "stemming": "n",
-    "lemmatization": "y"
+    "stemming": "y",
+    "lemmatization": "n"
 }
