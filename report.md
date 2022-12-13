@@ -317,3 +317,18 @@ ACIERTO = 64.79%
 }
 ACIERTO = 64.82%
 ```
+
+## BEST_TEST
+
+No numbers? (y/n): n|y
+No long words? (y/n): n|y
+Lowercase? (y/n): y
+No punctuation marks? (y/n): y
+No stopwords? (y/n): n|y
+No emojis? (y/n/w): n|y
+No URLs and HTML hashtags? (y/n): y
+Spell check? (y/n): n
+Stemming? (y/n): n
+Lemmatization? (y/n): n
+
+80.65%

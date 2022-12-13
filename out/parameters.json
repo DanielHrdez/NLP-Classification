@@ -3,10 +3,10 @@
     "long_words": "y",
     "lowercase": "y",
     "punctuation_marks": "y",
-    "stopwords": "n",
+    "stopwords": "y",
     "emojis": "y",
     "url_html_hashtags": "y",
-    "spell_check": "y",
-    "stemming": "y",
+    "spell_check": "n",
+    "stemming": "n",
     "lemmatization": "n"
 }

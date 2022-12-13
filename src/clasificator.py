@@ -96,7 +96,7 @@ def process_documents(dataframe: pandas.DataFrame, language_models: list, output
     size = len(dataframe)
     for i in range(size):
         text = dataframe.values[i, 0]
-        try: current_result = {'text': text[:10]}
+        try: current_result = {'text': text[:10].replace('\n', ' ')}
         except: continue
         for _ in vocabulary.tokenize(text.split(), use_set=False):
             pass
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     YELLOW = '\033[33m'
     GREEN = '\033[32m'
     RESET = '\033[0m'
-    MAX = 6 + 33444
+    MAX = 7 + 3186
     print(YELLOW, end='')
     with alive_bar(MAX) as bar:
         count = 1
