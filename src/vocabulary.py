@@ -151,24 +151,24 @@ def stemming(tokens: set[str], option: str) -> set[str]:
         return {stemmer.stem(word) for word in tokens if word}
     return tokens
 
-def lemmatization(tokens: set[str], option: str) -> set[str]:
+def lemmatization(tokens: set[str], option: str) -> list[str]:
     """
     Lemmatization the tokens
         :param tokens: set of tokens
         :param lemmatization: lemmatization? (y/n)
-        :return: set of tokens with lemmatization
+        :return: list of tokens with lemmatization in alphabetic order
     """
     if option == 'y':
         lemmatizer = WordNetLemmatizer()
-        return {lemmatizer.lemmatize(word, pos='v') for word in tokens if word}
-    return tokens
+        return sorted({lemmatizer.lemmatize(word, pos='v') for word in tokens if word})
+    return sorted(tokens)
 
-def tokenize(text: list[str], parameters: dict) -> set[str]:
+def tokenize(text: list[str], parameters: dict) -> list[str]:
     """
     Tokenize the text
         :param text: text to tokenize
         :param parameters: dictionary with the parameters
-        :return: set of tokens
+        :return: list of tokens in alphabetic order
     """
     tokens = set(text.split())
     tokens = lowercase(tokens, parameters['lowercase'])
