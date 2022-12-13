@@ -1,15 +1,19 @@
 #!/usr/bin/python
 import pandas as pd
 
-real = pd.read_excel('data/test/COV_test_2.xlsx', header=None).iloc[:, 1].values
+real = pd.read_excel('data/COV_test_g2_debug.xlsx', header=None).iloc[:, 2].values
 pred = open('out/resumen_alu0101331720.txt').read().split('\n')
 
 acierto = 0
 
 n_tweets = len(real)
+i_pred = 0
 for i in range(n_tweets):
-    if real[i].lower() == pred[i].lower():
+    if i == 11: i_pred = 1500
+    elif i == 22: i_pred = 3177
+    if real[i].lower() == pred[i_pred].lower():
         acierto += 1
+    i_pred += 1
 
 pc_acierto = acierto / n_tweets * 100
 

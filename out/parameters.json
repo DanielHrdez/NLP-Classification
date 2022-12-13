@@ -1,12 +1,12 @@
 {
-    "numbers": "y",
-    "long_words": "y",
+    "numbers": "n",
+    "long_words": "n",
     "lowercase": "y",
     "punctuation_marks": "y",
-    "stopwords": "y",
-    "emojis": "y",
+    "stopwords": "n",
+    "emojis": "n",
     "url_html_hashtags": "y",
-    "spell_check": "n",
-    "stemming": "n",
+    "spell_check": "y",
+    "stemming": "y",
     "lemmatization": "n"
 }

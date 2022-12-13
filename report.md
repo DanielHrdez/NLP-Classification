@@ -332,3 +332,18 @@ Stemming? (y/n): n
 Lemmatization? (y/n): n
 
 80.65%
+
+****
+No numbers? (y/n): n
+No long words? (y/n): n
+Lowercase? (y/n): y
+No punctuation marks? (y/n): y
+No stopwords? (y/n): n
+No emojis? (y/n/w): n
+No URLs and HTML hashtags? (y/n): y
+Spell check? (y/n): y
+Stemming? (y/n): y
+Lemmatization? (y/n): n
+
+ACIERTO - 52.34%
+****
