@@ -15,6 +15,7 @@ import os
 import math
 import pandas
 from vocabulary import Vocabulary
+from alive_progress import alive_bar
 
 def parse_arguments(argument_list: list[str]) -> dict:
     """
@@ -64,26 +65,29 @@ def token_probabilities(vocabulary: list[str], tokens: list[str]) -> dict:
         :param tokens: list of tokens
         :return: dictionary with the probabilities
     """
-    auxiliar = {i: 1 for i in vocabulary}
+    auxiliar = {i: 0 for i in vocabulary}
     unknown = '<UNK>'
-    auxiliar[unknown] = 1
+    auxiliar[unknown] = 0
     for token in tokens:
         if token in auxiliar:
             auxiliar[token] += 1
         else:
             auxiliar[unknown] += 1
+    yield 'Words counted.'
     result = auxiliar.copy()
     for token in auxiliar:
         if auxiliar[token] < 2 and token != unknown:
             result[unknown] += 1
             del result[token]
+    yield 'Filtered one-aparition words.'
     for token in result:
-        probability = result[token] / (len(tokens) + len(vocabulary))
+        probability = (result[token] + 1) / (len(tokens) + len(vocabulary))
         result[token] = {
             'frec': result[token],
-            'log_prob': round(math.log(probability), 2),
+            'log_prob': math.log(probability),
         }
-    return result
+    yield 'Words probabilities done.'
+    yield result
 
 def write_model(filename: str, number_documents: int, number_words: int, tokens: dict) -> None:
     """
@@ -111,7 +115,9 @@ def main() -> None:
     # input_filename, output_filename = parse_arguments(sys.argv[1:])
     input_filename, output_filename = './data/COV_train.xlsx', './out/language_model'
     parameters = search_parameters_json()
+    yield 'Parameters file found'
     vocabulary_file = search_vocabulary()[2:]
+    yield 'Vocabulary file found'
     vocabulary = Vocabulary('')
     vocabulary.parameters = parameters
     train_file = pandas.read_excel(input_filename)
@@ -119,22 +125,54 @@ def main() -> None:
     negative_tweets = train_file[train_file.Negative == 'Negative'].iloc[:, 0]
     positive = positive_tweets.str.cat(sep=' ').split()
     negative = negative_tweets.str.cat(sep=' ').split()
-    positive_tokens = vocabulary.tokenize(positive, return_set=False)
-    negative_tokens = vocabulary.tokenize(negative, return_set=False)
-    positive_probabilities = token_probabilities(vocabulary_file, positive_tokens)
-    negative_probabilities = token_probabilities(vocabulary_file, negative_tokens)
+    for message in vocabulary.tokenize(positive, return_set=False):
+        yield message
+    positive_tokens = vocabulary.tokens
+    for message in vocabulary.tokenize(negative, return_set=False):
+        yield message
+    negative_tokens = vocabulary.tokens
+    count = 0
+    iterator_pos = token_probabilities(vocabulary_file, positive_tokens)
+    iterator_neg = token_probabilities(vocabulary_file, negative_tokens)
+    for message in iterator_pos:
+        if (count > 0): break
+        count += 1
+        yield message
+    yield next(iterator_pos)
+    positive_probabilities = next(iterator_pos)
+    count = 0
+    for message in iterator_neg:
+        if (count > 0): break
+        count += 1
+        yield message
+    yield next(iterator_neg)
+    negative_probabilities = next(iterator_neg)
     write_model(
         output_filename + '_positive.txt',
         len(positive_tweets),
         len(positive_probabilities),
         positive_probabilities,
     )
+    yield f'File {output_filename}_positive.txt written.'
     write_model(
         output_filename + '_negative.txt',
         len(negative_tweets),
         len(negative_probabilities),
         negative_probabilities,
     )
+    yield f'File {output_filename}_negative.txt written.'
 
 if __name__ == '__main__':
-    main()
+    YELLOW = '\033[33m'
+    GREEN = '\033[32m'
+    RESET = '\033[0m'
+    MAX = 28
+    print(YELLOW, end='')
+    with alive_bar(MAX) as bar:
+        count = 1
+        for message in main():
+            if (count < MAX): print(RESET + message + YELLOW)
+            else: print(RESET + message + GREEN)
+            bar()
+            count += 1
+    print(RESET)

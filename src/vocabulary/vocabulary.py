@@ -19,6 +19,7 @@ from symspellpy import SymSpell
 import pkg_resources
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from .constants import PUNTUATION_MARKS, STOP_WORDS
+from alive_progress import alive_bar
 
 class Vocabulary:
     """
@@ -228,16 +229,25 @@ class Vocabulary:
             :return: list of tokens in alphabetic order
         """
         tokens = self.filter_numbers(tokens, return_set)
+        yield 'Numbers filtered.'
         tokens = self.filter_long_words(tokens, return_set)
+        yield 'Long words filtered.'
         tokens = self.lowercase(tokens, self.parameters['lowercase'], return_set)
+        yield 'Lowercase done.'
         tokens = self.puntuation_marks(tokens, self.parameters['punctuation_marks'], return_set)
+        yield 'Puntuation marks done.'
         tokens = self.stopwords(tokens, self.parameters['stopwords'], return_set)
+        yield 'Stopwords done.'
         tokens = self.emojis(tokens, self.parameters['emojis'], return_set)
+        yield 'Emojis done.'
         tokens = self.url_html_hashtags(tokens, self.parameters['url_html_hashtags'], return_set)
+        yield 'URL-HTML-# done.'
         tokens = self.spell_check(tokens, self.parameters['spell_check'], return_set)
+        yield 'Spell check done.'
         tokens = self.stemming(tokens, self.parameters['stemming'], return_set)
+        yield 'Stemming done.'
         self.tokens = self.lemmatization(tokens, self.parameters['lemmatization'], return_set)
-        return self.tokens
+        yield 'Lemmatization done.'
 
     def write_file(self, filename: str, tokens: list[str]) -> None:
         """
